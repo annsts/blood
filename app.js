@@ -1,5 +1,6 @@
-let scene, renderer, particleSystem, uniforms, targetPositions, originalPositions, dispersionTargets, formingText = false, dispersing = false, isAnimating = false;
-let camera;
+let scene, renderer, particleSystem, uniforms, targetPositions, originalPositions, dispersionTargets;
+let formingText = false, dispersing = false, isAnimating = false;
+let camera, currentTextIndex = null;
 
 const poem = [
     ["blood,", "blood,", "blood,"],
@@ -32,18 +33,10 @@ function init() {
 
     window.addEventListener('resize', onWindowResize, false);
     document.addEventListener('mousemove', onMouseMove, false);
-    document.getElementById('button1').addEventListener('click', () => formText(0));
-    document.getElementById('button2').addEventListener('click', () => formText(1));
-    document.getElementById('button3').addEventListener('click', () => formText(2));
-    document.getElementById('button4').addEventListener('click', () => formText(3));
-    document.getElementById('button5').addEventListener('click', () => formText(4));
-    document.getElementById('button6').addEventListener('click', () => formText(5));
-    document.getElementById('button7').addEventListener('click', () => formText(6));
-    document.getElementById('button8').addEventListener('click', () => formText(7));
-    document.getElementById('button9').addEventListener('click', () => formText(8));
-    document.getElementById('button10').addEventListener('click', () => formText(9));
-    document.getElementById('button11').addEventListener('click', () => formText(10));
-    document.getElementById('button12').addEventListener('click', () => formText(11));
+    
+    for (let i = 0; i < poem.length; i++) {
+        document.getElementById(`button${i + 1}`).addEventListener('click', () => handleButtonClick(i));
+    }
 }
 
 function onWindowResize() {
@@ -116,14 +109,43 @@ function addParticles() {
     controls.maxPolarAngle = Math.PI / 2; 
 }
 
+function handleButtonClick(buttonIndex) {
+    if (isAnimating) {
+        return;
+    }
+
+    if (currentTextIndex !== null) {
+        startDispersing(() => formText(buttonIndex));
+    } else {
+        formText(buttonIndex);
+    }
+}
+
+function startDispersing(callback) {
+    if (formingText) {
+        formingText = false;
+        uniforms.u_formingText.value = 0;
+    }
+    dispersing = true;
+    prepareDispersion();
+    setTimeout(() => {
+        dispersing = false;
+        isAnimating = false;
+        currentTextIndex = null;
+        resetButtons();
+        if (callback) callback();
+    }, 1000);
+}
+
 function formText(buttonIndex) {
     if (isAnimating) {
         return; 
     }
-    setActiveButton(buttonIndex + 1);
     isAnimating = true;
     formingText = true;
+    currentTextIndex = buttonIndex;
     uniforms.u_formingText.value = 1; 
+    setActiveButton(buttonIndex + 1);
 
     // target positions for the lines of the poem
     const lines = poem[buttonIndex];
@@ -143,7 +165,7 @@ function formText(buttonIndex) {
         { x: 10, y: 500 },
         { x: 600, y: 700 },
         { x: 10, y: 650 },
-        { x: 1100, y: 650 },
+        { x: 1000, y: 650 },
         { x: 10, y: 780 },
         { x: 300, y: 100 },
         { x: 1000, y: 600 },
@@ -174,8 +196,11 @@ function formText(buttonIndex) {
     }
 
     setTimeout(() => {
-        prepareDispersion();
-    }, 10000);
+        isAnimating = false;
+        formingText = false;
+        resetButtons(); 
+        
+    }, 5000);
 }
 
 function prepareDispersion() {
@@ -226,6 +251,7 @@ function disperseParticles() {
 function setActiveButton(activeIndex) {
     const buttons = document.querySelectorAll('#button-container button');
     buttons.forEach((button, index) => {
+        button.classList.remove('active');
         if (index + 1 === activeIndex) {
             button.classList.remove('inactive');
             button.classList.add('active');
@@ -239,7 +265,7 @@ function setActiveButton(activeIndex) {
 function resetButtons() {
     const buttons = document.querySelectorAll('#button-container button');
     buttons.forEach(button => {
-        button.classList.remove('active', 'inactive');
+        button.classList.remove('inactive');
     });
 }
 

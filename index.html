@@ -37,8 +37,7 @@
             transition: background-color 0.3s, color 0.3s;
         }
         button:hover:not(.inactive):not(.active) {
-            background-color: black;
-            color: white;
+            background-color: #d4d4d4;
         }
         button.active {
             background-color: black;
@@ -47,6 +46,7 @@
         button.inactive {
             background-color: #e0e0e0;
             color: #999;
+            cursor: not-allowed;
         }
         @media (max-width: 600px) {
             #button-container {
